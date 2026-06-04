@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Standorte HMU</title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+<!--Fade in / out Animation-->
+  <style>
+  @keyframes fadeOutPage {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  .fadeOutPage {
+    animation: fadeOutPage 0.5s forwards;
+  }
+</style>
+<style>
+  /* Container um Input relativ positionieren */
+  .search-container {
+    position: relative;
+  }
+
+  /* Meldung absolut über dem Input*/
+  #search-message {
+    position: absolute;
+    top: 100%;       /* direkt unter dem Input */
+    left: 0;
+    width: 100%;
+    padding: 0.25rem 0.5rem;
+    color: #EF4444;  /* rot */
+    font-size: 0.875rem;
+    z-index: 10;
+    display: none;
+  }
+</style>
+
+</head>
+
+<body class="min-h-screen text-zinc-100 font-sans bg-[oklch(16%_0.042_265.755)] flex flex-col">
+
+  <!-- Header -->
+  <header class="px-8 py-6 border-b border-white/0">
+    <h1 class="text-2xl font-semibold tracking-tight">
+      HMU-Erfurt Raumbelegung 
+    </h1>
+    <p class="text-zinc-400 text-sm mt-1">
+      Standort auswählen...
+    </p>
+  </header>
+
+
+
+  <!-- Main -->
+  <main class="p-8 flex-1 flex flex-col items-center">
+
+<!-- Searchbar Container -->
+<div class="search-container w-full max-w-md mb-12">   
+  <input 
+      type="text" 
+      placeholder="Raum suchen..." 
+      class="w-full pl-10 pr-4 py-3 rounded-xl bg-[oklch(25%_0.041_260.031)] shadow-lg shadow-black/50 border border-white/10 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+      id="room-search">
+  
+      <!-- Icon Lupe -->
+      <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+        🔍
+      </span>
+
+  <!-- Suchergebnisse Dropdown -->
+  <div 
+    id="search-results" 
+    class="absolute top-full left-0 w-full bg-zinc-800 rounded-b-xl hidden shadow-lg z-50">
+  </div>
+
+  <!-- Kein-Raum-Gefunden Meldung -->
+  <div 
+    id="search-message" 
+    class="hidden font-semibold px-2 py-1">
+    Kein Raum gefunden
+  </div>
+</div>
+
+
+
+  <!-- Standort-Buttons horizontal zentriert -->
+  <div class="flex flex-wrap justify-center gap-6 w-full max-w-6xl">
+
+    <!-- Standort A -->
+    <a href="StandortA.html" class="group relative w-64">
+      <div class="absolute -inset-0.5 rounded-2xl bg-cyan-400/50 blur-xl opacity-0 transition group-hover:opacity-100"></div>
+      <div class="relative bg-[oklch(25%_0.041_260.031)] rounded-2xl p-6 border border-white/5 shadow-lg shadow-black/50 
+            transition-all duration-300 hover:-translate-y-1 
+            flex flex-col justify-center items-center text-center h-44">
+        <h3 class="text-xl font-semibold mb-2">Forschungscampus Bindersleben</h3>
+        <p class="text-zinc-400 text-sm">Lehr- & Forschungsräume</p>
+      </div>
+    </a>
+
+    <!-- Standort B -->
+    <a href="StandortB.html" class="group relative w-64">
+      <div class="absolute -inset-0.5 rounded-2xl bg-cyan-400/50 blur-xl opacity-0 transition group-hover:opacity-100"></div>
+      <div class="relative bg-[oklch(25%_0.041_260.031)] rounded-2xl p-6 border border-white/5 shadow-lg shadow-black/50 
+            transition-all duration-300 hover:-translate-y-1 
+            flex flex-col justify-center items-center text-center h-44">
+        <h3 class="text-xl font-semibold mb-2">Campus Alte Post</h3>
+        <p class="text-zinc-400 text-sm">Vorlesungs- & Seminargebäude</p>
+      </div>
+    </a>
+
+    <!-- Standort C -->
+    <a href="StandortC.html" class="group relative w-64">
+      <div class="absolute -inset-0.5 rounded-2xl bg-cyan-400/50 blur-xl opacity-0 transition group-hover:opacity-100"></div>
+      <div class="relative bg-[oklch(25%_0.041_260.031)] rounded-2xl p-6 border border-white/5 shadow-lg shadow-black/50 
+            transition-all duration-300 hover:-translate-y-1 
+            flex flex-col justify-center items-center text-center h-44">
+        <h3 class="text-xl font-semibold mb-2">Villa Marienhaus</h3>
+        <p class="text-zinc-400 text-sm">Hauptsitz & Hochschulzentrale</p>
+      </div>
+    </a>
+  </div>
+</main>
+
+
+
+  <!-- Footer -->
+  <footer class="bg-[oklch(16%_0.042_265.755)] border-t border-white/0 py-6 text-center">
+    <img src="images/HMU_Logo.png" alt="Logo" class="mx-auto h-10 w-auto">
+    <p class="text-zinc-400 text-sm mt-2">Powered by Trainex</p>
+  </footer>
+
+
+<!-- Js Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const body = document.body;
+      const input = document.getElementById("room-search");
+      const resultsBox = document.getElementById("search-results");
+
+// Hier Meldung-Container anlegen, falls noch nicht vorhanden
+  let messageBox = document.getElementById("search-message");
+  if (!messageBox) {
+    messageBox = document.createElement("div");
+    messageBox.id = "search-message";
+    messageBox.className = "mt-2 text-sm text-red-500 hidden";
+    input.parentNode.appendChild(messageBox);
+    }
+
+      const rooms = [
+      
+      //Standort A
+        { name: "P2.04", label: "P2.04", target: "StandortA.html#P2.04"},
+        { name: "P2.05", label: "P2.05", target: "StandortA.html#P2.05"},
+        { name: "P2.06", label: "P2.06", target: "StandortA.html#P2.06"},
+        { name: "P2.11", label: "P2.11", target: "StandortA.html#P2.11"},
+
+        { name: "P3.01", label: "P3.01", target: "StandortA.html#P3.01"},
+        { name: "P3.02", label: "P3.02", target: "StandortA.html#P3.02"},
+        { name: "P3.36", label: "P3.36", target: "StandortA.html#P3.36"},
+        { name: "P3.X1", label: "P3.X1", target: "StandortA.html#P3.X1"},
+        { name: "P3.X2", label: "P3.X2", target: "StandortA.html#P3.X2"},
+        { name: "P3.X3", label: "P3.X3", target: "StandortA.html#P3.X3"},
+        { name: "P3.X4", label: "P3.X4", target: "StandortA.html#P3.X4"},
+        { name: "P3.X5", label: "P3.X5", target: "StandortA.html#P3.X5"},
+        { name: "P3.X6", label: "P3.X6", target: "StandortA.html#P3.X6"},
+        { name: "P3.X7", label: "P3.X7", target: "StandortA.html#P3.X7"},
+
+        { name: "P4.01-03", label: "P4.01-03", target: "StandortA.html#P4.01-03"},
+        { name: "P4.08-11", label: "P4.08-11", target: "StandortA.html#P4.08-11"},
+        { name: "P4.12", label: "P4.12", target: "StandortA.html#P4.12"},
+        { name: "P4.13", label: "P4.13", target: "StandortA.html#P4.13"},
+        { name: "P4.31", label: "P4.31", target: "StandortA.html#P4.31"},
+        { name: "P4.32", label: "P4.32", target: "StandortA.html#P4.32"},
+        { name: "P4.34", label: "P4.34", target: "StandortA.html#P4.34"},
+        { name: "P4.35", label: "P4.35", target: "StandortA.html#P4.35"},
+        { name: "P4.49", label: "P4.49", target: "StandortA.html#P4.49"},
+
+        { name: "P5.01-04", label: "P5.01-04", target: "StandortA.html#P5.01-04"},
+        { name: "P5.09", label: "P5.09", target: "StandortA.html#P5.09"},
+
+
+      //Standort B
+        { name: "AP2.08", label: "AP2.08", target: "StandortB.html#AP2.08"},
+        { name: "AP2.09", label: "AP2.09", target: "StandortB.html#AP2.09"},
+        { name: "AP2.12", label: "AP2.12", target: "StandortB.html#AP2.12"},
+        { name: "AP2.13", label: "AP2.13", target: "StandortB.html#AP2.13"},
+        
+        { name: "KM2.01", label: "KM2.01", target: "StandortB.html#KM2.01"},
+        { name: "KM2.02-03", label: "KM2.02-03", target: "StandortB.html#KM2.02-03"},
+        { name: "KM2.04", label: "KM2.04", target: "StandortB.html#KM2.04"},
+        { name: "KM2.08", label: "KM2.08", target: "StandortB.html#KM2.08"},
+
+        //Standort C
+        { name: "V01/02", label: "V01/02", target: "StandortC.html#V01/02"},
+        { name: "V04", label: "V04", target: "StandortC.html#V04"},
+        { name: "V1.4", label: "V01.4", target: "StandortC.html#V1.4"},
+        { name: "V1.5", label: "V1.5", target: "StandortC.html#V1.5"}
+      ];
+
+      // 🔍 Suche
+      input.addEventListener("input", () => {
+        const query = input.value.toLowerCase();
+        resultsBox.innerHTML = "";
+        messageBox.classList.add("hidden"); // Meldung verstecken bei neuem Input
+        messageBox.style.display = "none"; // Meldung sofort verstecken bei neuem Input
+
+        if (!query) {
+        // Wenn Input leer ist, nichts anzeigen und Meldung verstecken
+        return;
+        }
+
+        const matches = rooms.filter(r =>
+          r.name.toLowerCase().includes(query)
+        );
+
+        if (!matches.length) {
+          messageBox.textContent = "Kein Raum gefunden";
+          messageBox.style.display = "block"; // sichtbar machen
+          return;
+          }
+
+        // Treffer vorhanden → Meldung verstecken
+        messageBox.style.display = "none";
+
+        resultsBox.classList.remove("hidden");
+
+        matches.forEach(room => {
+          const div = document.createElement("div");
+          div.textContent = room.label;
+          div.className = "px-4 py-3 cursor-pointer hover:bg-white/5 transition text-sm";
+
+          div.addEventListener("click", () => {
+            body.classList.add("fadeOutPage");
+            setTimeout(() => {
+              window.location.href = room.target;
+            }, 300);
+          });
+
+          resultsBox.appendChild(div);
+        });
+      });
+
+      // ⏎ Enter → erster Treffer
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          const first = resultsBox.querySelector("div");
+          if (first) first.click();
+        }
+      });
+
+      // Standort Fade-Out
+      document.querySelectorAll("a.group").forEach(link => {
+        link.addEventListener("click", e => {
+          e.preventDefault();
+          body.classList.add("fadeOutPage");
+          setTimeout(() => {
+            window.location.href = link.href;
+          }, 300);
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

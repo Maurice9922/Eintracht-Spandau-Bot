@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Villa Marienhaus</title>
+
+  <!-- Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+<!--Fade in / out Animation-->
+<style>
+body.preload {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s forwards;
+}
+
+@keyframes fadeIn { from {opacity: 0} to {opacity:1} }
+@keyframes fadeOut { from {opacity: 1} to {opacity:0} }
+
+@keyframes fadeOutPage { from {opacity:1} to {opacity:0} }
+.fadeOutPage { animation: fadeOutPage 0.5s forwards; }
+</style>
+</head>
+
+<body class=" preload min-h-screen text-zinc-100 font-sans bg-[oklch(16%_0.042_265.755)] flex flex-col">
+
+  <!-- Header -->
+  <header class="px-8 py-6 border-b border-white/0">
+    <h1 class="text-2xl font-semibold tracking-tight">
+      Villa Marienhaus
+    </h1>
+    <p class="text-zinc-400 text-sm mt-1">
+      Live-Belegung & Status
+    </p>
+  </header>
+
+
+
+  <!-- Main -->
+  <main class="p-8 flex-1 flex flex-col items-center">
+
+ <!--Zurück-Button-->
+   <a href="index.html"
+      id="back-button"
+     class="absolute left-0 ml-6 -mt-2 sm:mt-1 flex items-center space-x-2 p-3 sm:p-1 rounded-full transition text-white">
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-9 w-9 sm:h-7 sm:w-7"
+         fill="none"
+         viewBox="0 0 24 24"
+         stroke="currentColor"
+         stroke-width="3">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15 19l-7-7 7-7" />
+    </svg>
+    <span class="hidden sm:inline font-medium">Zurück</span>
+  </a>
+
+   <!-- FILTER BUTTON -->
+<div class="w-full max-w-md mx-auto mb-12 flex justify-center">
+
+  <!-- Filter Dropdown -->
+  <div class="relative text-zinc-400">
+    <!-- Filter Icon -->
+    <span class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+      🔽
+    </span>
+    <select 
+      id="room-filter"
+      class="w-full pl-10 pr-4 py-3 rounded-xl bg-[oklch(25%_0.041_260.031)] shadow-lg shadow-black/50 border border-white/10 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition 
+      sm:pl-10 sm:pr-4 sm:py-3 text-xs sm:text-sm">
+      <option class="sm:block" value="">Alle Räume</option>
+
+      <option disabled>──────────</option>
+      <option value="V01/02">V01/02 - Seminarraum</option>
+      <option value="V04">V04 - Besprechungsraum</option>
+      <option value="V1.4">V1.4 - Seminarraum</option>
+      <option value="V1.5">V1.5 - Seminarraum</option>
+    </select>
+  </div>
+
+</div>
+
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+      <!-- Raum 1 -->
+      <div class="group relative room-card cursor-pointer "id="V01/02">
+        <div class="
+          absolute -inset-0.5 rounded-2xl bg-green-400/50 blur-xl opacity-0 transition group-hover:opacity-100
+        "></div>
+
+        <div class="relative bg-[oklch(25%_0.041_260.031)] rounded-2xl p-6 border border-white/5 shadow-lg shadow-black/50 transition-all duration-300 hover:-translate-y-1">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-lg font-semibold">
+            V01/02 <span class=" text-sm font-medium">(Seminarraum)</span>
+            </h3>
+            <span class="text-emerald-400 text-sm font-medium mt-1">frei</span>
+          </div>
+          <p class="text-zinc-400 text-sm mb-4">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+          <p class="text-zinc-400 text-sm">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+        </div>
+      </div>
+
+      <!-- Raum 2 -->
+      <div class="group relative room-card cursor-pointer "id="V04">
+        <div class="
+          absolute -inset-0.5 rounded-2xl bg-red-400/50 blur-xl opacity-0 transition group-hover:opacity-100
+        "></div>
+
+        <div class="
+          relative bg-[oklch(25%_0.041_260.031)] rounded-2xl p-6 border border-white/5 shadow-lg shadow-black/50 transition-all duration-300 hover:-translate-y-1">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-lg font-semibold">
+            V04 <span class=" text-sm font-medium">(Besprechungsraum)</span>
+            </h3>
+            <span class="text-red-500 text-sm font-medium mt-1">belegt</span>
+          </div>
+          <p class="text-zinc-400 text-sm mb-4">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+          <p class="text-zinc-400 text-sm">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+        </div>
+      </div>
+
+      <!-- Raum 3 -->
+      <div class="group relative room-card cursor-pointer "id="V1.4">
+        <div class="
+          absolute -inset-0.5 rounded-2xl bg-red-400/50 blur-xl opacity-0 transition group-hover:opacity-100
+        "></div>
+
+        <div class="
+          relative bg-[oklch(25%_0.041_260.031)] rounded-2xl p-6 border border-white/5 shadow-lg shadow-black/50 transition-all duration-300 hover:-translate-y-1
+        ">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-lg font-semibold">
+            V1.4 <span class=" text-sm font-medium">(Seminarraum)</span>
+            </h3>
+            <span class="text-red-500 text-sm font-medium mt-1">belegt</span>
+          </div>
+          <p class="text-zinc-400 text-sm mb-4">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+          <p class="text-zinc-400 text-sm">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+        </div>
+      </div>
+
+      <!-- Raum 4 -->
+      <div class="group relative room-card cursor-pointer "id="V1.5">
+        <div class="
+          absolute -inset-0.5 rounded-2xl bg-green-400/50 blur-xl opacity-0 transition group-hover:opacity-100
+        "></div>
+
+        <div class="
+          relative bg-[oklch(25%_0.041_260.031)] rounded-2xl p-6 border border-white/5 shadow-lg shadow-black/50 transition-all duration-300 hover:-translate-y-1
+        ">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-lg font-semibold">
+            V1.5 <span class=" text-sm font-medium">(Seminarraum)</span>
+            </h3>
+            <span class="text-emerald-400 text-sm font-medium mt-1">frei</span>
+          </div>
+          <p class="text-zinc-400 text-sm mb-4">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+          <p class="text-zinc-400 text-sm">
+            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+</body>
+
+
+<!-- Footer -->
+<footer class="bg-[oklch(16%_0.042_265.755)] border-t border-white/0 py-6 text-center">
+    <img src="images/HMU_Logo.png" alt="Logo" class="mx-auto h-10 w-auto">
+    <p class="text-zinc-400 text-sm mt-2">Powered by Trainex</p>
+  </footer>
+
+
+<!-- JS Script-->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const cards = document.querySelectorAll(".room-card");
+  const roomList = document.querySelector("main > div.grid"); // Grid direkt
+  const roomDetail = document.createElement("div"); // Einzelansicht Container
+  const backButton = document.getElementById("back-button");
+  const filter = document.getElementById("room-filter");
+  const body = document.body;
+
+  // Einzelansicht Container anhängen
+  roomDetail.id = "room-detail";
+  roomDetail.classList.add("hidden", "w-full", "max-w-4xl", "mx-auto", "mb-16", "flex", "justify-center");
+  document.querySelector("main").appendChild(roomDetail);
+
+/*FUNKTION: Karte als Einzelansicht zeigen*/
+  function showCard(card, delay = 300) {
+
+    history.replaceState(null, "", "#" + card.id);
+
+    // Grid fade-out nur bei normalem Klick
+    if (delay !== 0 && !roomList.classList.contains("hidden")) {
+      roomList.classList.add("fade-out");
+    }
+
+    setTimeout(() => {
+      if (delay !== 0) roomList.classList.add("hidden");
+      roomList.classList.remove("fade-out");
+
+      roomDetail.innerHTML = "";
+      const clone = card.cloneNode(true);
+      clone.classList.add("mx-auto", "max-w-md", "flex", "justify-center");
+
+      // Glow dauerhaft sichtbar
+      const glow = clone.querySelector("div.absolute");
+      if (glow) {
+        glow.classList.remove("opacity-0", "group-hover:opacity-100");
+        glow.classList.add("opacity-80");
+      }
+
+      roomDetail.appendChild(clone);
+
+      // Einzelkarte fade-in
+      roomDetail.classList.remove("hidden");
+      roomDetail.classList.add("fade-in");
+      setTimeout(() => roomDetail.classList.remove("fade-in"), 300);
+    }, delay);
+  }
+
+/*FILTER*/
+  filter.addEventListener("change", () => {
+  const value = filter.value;
+
+/*ALLE RÄUME → GRID*/
+  if (value === "") {
+    if (!roomDetail.classList.contains("hidden")) {
+      roomDetail.classList.add("fade-out");
+      setTimeout(() => {
+        roomDetail.classList.add("hidden");
+        roomDetail.classList.remove("fade-out");
+
+        roomList.classList.remove("hidden");
+        roomList.classList.add("fade-in");
+        setTimeout(() => roomList.classList.remove("fade-in"), 300);
+      }, 300);
+    }
+    return;
+  }
+
+  const card = document.getElementById(value);
+  if (!card) return;
+
+  const alreadyInDetail = !roomDetail.classList.contains("hidden");
+
+/*EINZELANSICHT → EINZELANSICHT*/
+  if (alreadyInDetail) {
+    roomDetail.classList.add("fade-out");
+
+    setTimeout(() => {
+      roomDetail.classList.remove("fade-out");
+      roomDetail.innerHTML = "";
+
+      const clone = card.cloneNode(true);
+      clone.classList.add("mx-auto", "max-w-md", "flex", "justify-center");
+
+      const glow = clone.querySelector("div.absolute");
+      if (glow) {
+        glow.classList.remove("opacity-0", "group-hover:opacity-100");
+        glow.classList.add("opacity-50");
+      }
+
+      roomDetail.appendChild(clone);
+      roomDetail.classList.add("fade-in");
+      setTimeout(() => roomDetail.classList.remove("fade-in"), 300);
+    }, 300);
+
+    return;
+  }
+
+/*GRID → EINZELANSICHT*/
+  roomList.classList.add("fade-out");
+
+  setTimeout(() => {
+    roomList.classList.add("hidden");
+    roomList.classList.remove("fade-out");
+
+    roomDetail.innerHTML = "";
+    const clone = card.cloneNode(true);
+    clone.classList.add("mx-auto", "max-w-md", "flex", "justify-center");
+
+    const glow = clone.querySelector("div.absolute");
+    if (glow) {
+      glow.classList.remove("opacity-0", "group-hover:opacity-100");
+      glow.classList.add("opacity-50");
+    }
+
+    roomDetail.appendChild(clone);
+    roomDetail.classList.remove("hidden");
+    roomDetail.classList.add("fade-in");
+    setTimeout(() => roomDetail.classList.remove("fade-in"), 300);
+  }, 300);
+});
+
+/*RAUM → EINZELANSICHT*/
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+      showCard(card, 300);
+      filter.value = card.id;
+    });
+  });
+
+/*ZURÜCK → GRID ODER INDEX*/
+  backButton.addEventListener("click", e => {
+    // Einzelansicht → Grid
+    if (!roomDetail.classList.contains("hidden")) {
+      e.preventDefault();
+      roomDetail.classList.add("fade-out");
+      setTimeout(() => {
+        roomDetail.classList.add("hidden");
+        roomDetail.classList.remove("fade-out");
+
+        roomList.classList.remove("hidden");
+        roomList.classList.add("fade-in");
+        setTimeout(() => roomList.classList.remove("fade-in"), 300);
+
+        filter.value = "";
+      }, 300);
+    } else {
+      // Wirklich zurück zur Index
+      e.preventDefault();
+      body.classList.add("fadeOutPage");
+      setTimeout(() => window.location.href = backButton.href, 300);
+    }
+  });
+
+/*HASH / SEARCHBAR*/
+  const hash = window.location.hash.replace("#", "");
+  if (hash) {
+    const card = document.getElementById(hash);
+    if (card) {
+      roomList.classList.add("hidden");
+      body.classList.remove("preload");
+      body.style.opacity = 1;
+
+      showCard(card, 50);
+      filter.value = hash;
+    }
+  } else {
+    setTimeout(() => {
+      body.classList.remove("preload");
+      body.classList.add("fade-in");
+    }, 50);
+  }
+});
+
+</script>
+
+</html>
+
+
