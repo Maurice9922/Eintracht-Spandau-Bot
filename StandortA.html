@@ -1163,7 +1163,7 @@ function createDetailCard(card) {
 
 /* EINZELANSICHT */
 function showCard(card, delay = 300) {
-  history.replaceState(null, "", "#" + card.id);
+  history.pushState(null, "", "#" + card.id);
 
   const switchingOnly =
     roomList.classList.contains("hidden") &&
@@ -1201,24 +1201,35 @@ function showCard(card, delay = 300) {
   }
 
   /* --- BROWSER BACK BUTTON HANDLING --- */
-  window.addEventListener('popstate', () => {
-    // Wenn der Browser "Zurück" drückt und wir noch in der Detailansicht sind
+  window.addEventListener("popstate", () => {
+
+  const hash = window.location.hash.replace("#", "");
+
+  // Kein Hash -> zurück zur Gridansicht
+  if (!hash) {
+
     if (!roomDetail.classList.contains("hidden")) {
-      // Verhindern, dass der Browser die Seite neu lädt oder springt
-      // Wir nutzen history.replaceState, um den aktuellen State zu aktualisieren
-      // und dann manuell zurück zum Grid zu wechseln.
-      
-      // 1. Hash entfernen (damit der Browser "Zurück" nicht mehr zum Hash führt)
-      history.replaceState(null, "", window.location.pathname);
-      
-      // 2. Unsere Animation starten
       backToGrid();
-      
-      // 3. Filter zurücksetzen (optional, da backToGrid das schon macht)
-      // filter.value = ""; 
     }
-    // Wenn roomDetail.hidden == true, passiert nichts -> Browser macht normalen Back-Flow.
-  });
+
+    return;
+  }
+
+  // Raum aus Hash öffnen
+  const card = document.getElementById(hash);
+
+  if (card) {
+
+    const levelContainer = card.closest(".level-container");
+
+    if (levelContainer) {
+      showOnlyLevel(levelContainer.dataset.level);
+    }
+
+    showCard(card, 0);
+    filter.value = hash;
+  }
+});
 
   // Grid -> Einzelansicht
   roomList.classList.add("fade-out");
@@ -1261,6 +1272,22 @@ function showCard(card, delay = 300) {
 /*FILTER*/
   filter.addEventListener("change", () => {
     const value = filter.value;
+
+    if (value.startsWith("LEVEL_")) {
+
+      const level = value.replace("LEVEL_", "");
+
+      currentLevelFilter = level;
+
+      history.pushState(
+        {
+          type: "level",
+          level: level
+        },
+        "",
+        "#LEVEL_" + level
+      );
+    }
 
     // 🔹 ALLE RÄUME
     if (value === "") {
@@ -1305,12 +1332,14 @@ function showCard(card, delay = 300) {
     }
 
     if (value === "LEVEL_4") {
+
       currentLevelFilter = "4";
       if (!roomDetail.classList.contains("hidden")) backToGrid();
 
       fadeSwitchLevels(() => {
         showOnlyLevel("4");
       });
+
       return;
     }
 
@@ -1666,7 +1695,7 @@ async function loadRoomData() {
         // ---- ZEILE 1 (Fehlermeldung) ----
         const line1 = document.createElement("p");
         // `whitespace-pre-wrap` erlaubt Umbruch bei 30 Zeichen, aber respektiert Leerzeichen davor
-        line1.className = "text-red-500 text-sm leading-5 whitespace-pre-wrap max-w-[30ch] mb-4";
+        line1.className = "text-red-500 text-sm leading-5 whitespace-pre-wrap max-w-[30ch] mb-6";
         
         const errorMsg = "❌ Daten konnten nicht geladen werden. Bitte die Seite neu laden oder später erneut versuchen.";
         const visibleText = `${errorMsg}`;
