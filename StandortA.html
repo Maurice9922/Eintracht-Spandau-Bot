@@ -161,7 +161,7 @@ body.preload {
 
 <!-- Einzelansicht -->
 <div id="room-detail"
-     class="hidden w-full max-w-4xl mx-auto mb-16">
+     class="hidden w-full max-w-4xl mx-auto mb-16 px-4">
 </div>
 
 <!-- GRID WRAPPER (NEU) -->
@@ -1064,6 +1064,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const filter = document.getElementById("room-filter");
   const body = document.body;
   const levels = document.querySelectorAll(".level-container");
+  let currentLevelFilter = null;
+
+  // Konfiguration
+  const MAX_BOOKINGS_DETAIL = 7; // Maximal 7 Buchungen in der Detailansicht
+  const MIN_DISPLAY = 2;         // Mindestens 2 Einträge (auch Platzhalter) in beiden Ansichten
 
 /*HELPER: EBENEN MIT FADE*/
   function fadeSwitchLevels(callback) {
@@ -1092,74 +1097,158 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /*ZURÜCK ZUM GRID*/
   function backToGrid() {
-    roomDetail.classList.add("fade-out");
-    setTimeout(() => {
-      roomDetail.classList.add("hidden");
-      roomDetail.classList.remove("fade-out");
 
-      roomList.classList.remove("hidden");
-      roomList.classList.add("fade-in");
-      setTimeout(() => roomList.classList.remove("fade-in"), 300);
-    }, 300);
-  }
+  roomDetail.classList.add("fade-out");
 
-/*EINZELANSICHT*/
-  function showCard(card, delay = 300) {
+  setTimeout(() => {
 
-    history.replaceState(null, "", "#" + card.id);
+    roomDetail.classList.add("hidden");
+    roomDetail.classList.remove("fade-out");
 
-    const switchingOnly =
-      roomList.classList.contains("hidden") &&
-      roomDetail.children.length > 0;
+    roomList.classList.remove("hidden");
 
-    // 🔹 Einzelansicht → nur Karte wechseln
-    if (switchingOnly) {
-      roomDetail.classList.add("fade-out");
-
-      setTimeout(() => {
-        roomDetail.classList.remove("fade-out");
-        roomDetail.innerHTML = "";
-
-        const clone = card.cloneNode(true);
-        clone.classList.add("mx-auto", "max-w-md", "flex", "justify-center");
-
-        const glow = clone.querySelector("div.absolute");
-        if (glow) {
-          glow.classList.remove("opacity-0", "group-hover:opacity-100");
-          glow.classList.add("opacity-80");
-        }
-
-        roomDetail.appendChild(clone);
-        roomDetail.classList.add("fade-in");
-        setTimeout(() => roomDetail.classList.remove("fade-in"), 300);
-      }, 300);
-      return;
+    // vorherige Ebene wiederherstellen
+    if (currentLevelFilter) {
+      showOnlyLevel(currentLevelFilter);
+    } else {
+      showAllLevels();
     }
 
-    // 🔹 Grid → Einzelansicht
-    roomList.classList.add("fade-out");
+    roomList.classList.add("fade-in");
 
     setTimeout(() => {
-      roomList.classList.add("hidden");
-      roomList.classList.remove("fade-out");
+      roomList.classList.remove("fade-in");
+    }, 300);
 
+  }, 300);
+}
+
+
+/* DETAIL CARD ERZEUGEN */
+function createDetailCard(card) {
+  const clone = card.cloneNode(true);
+
+  clone.classList.remove("cursor-pointer");
+
+  clone.classList.add(
+    "w-full",
+    "max-w-sm", // Breite angepasst
+    "mx-auto"
+  );
+
+  const glow = clone.querySelector("div.absolute");
+
+  if (glow) {
+    glow.classList.remove(
+      "opacity-0",
+      "group-hover:opacity-100"
+    );
+
+    glow.classList.add("opacity-80");
+
+    glow.classList.remove("-inset-0.5");
+    glow.classList.add("-inset-1");
+  }
+
+  const content = clone.querySelector("div.relative.bg-\\[oklch\\(25\\%_0\\.041_260\\.031\\)\\]");
+
+  if (content) {
+    content.classList.remove("p-6");
+    content.classList.add("p-6"); // Padding in Detailansicht (optional anpassbar)
+  }
+
+  return clone;
+}
+
+
+/* EINZELANSICHT */
+function showCard(card, delay = 300) {
+  history.replaceState(null, "", "#" + card.id);
+
+  const switchingOnly =
+    roomList.classList.contains("hidden") &&
+    roomDetail.children.length > 0;
+
+  // Einzelansicht -> andere Karte
+  if (switchingOnly) {
+    roomDetail.classList.add("fade-out");
+
+    setTimeout(() => {
+      roomDetail.classList.remove("fade-out");
       roomDetail.innerHTML = "";
 
-      const clone = card.cloneNode(true);
-      clone.classList.add("mx-auto", "max-w-md", "flex", "justify-center");
-
-      const glow = clone.querySelector("div.absolute");
-      if (glow) {
-        glow.classList.remove("opacity-0", "group-hover:opacity-100");
-        glow.classList.add("opacity-80");
+      // WICHTIG: Hier holen wir die Daten neu und rendern sie mit "detail"
+      const roomId = card.id;
+      const roomData = roomDataGlobal.find(r => r.id === roomId);
+      
+      if (roomData) {
+        const detailCard = createDetailCard(card);
+        roomDetail.appendChild(detailCard);
+        
+        // Jetzt rendern wir die Buchungen für diese neue Karte mit "detail"
+        renderRoom(roomData, "detail");
       }
 
-      roomDetail.appendChild(clone);
-      roomDetail.classList.remove("hidden");
       roomDetail.classList.add("fade-in");
-      setTimeout(() => roomDetail.classList.remove("fade-in"), 300);
-    }, delay);
+
+      setTimeout(() => {
+        roomDetail.classList.remove("fade-in");
+      }, 300);
+
+    }, 300);
+
+    return;
   }
+
+  /* --- BROWSER BACK BUTTON HANDLING --- */
+  window.addEventListener('popstate', () => {
+    // Wenn der Browser "Zurück" drückt und wir noch in der Detailansicht sind
+    if (!roomDetail.classList.contains("hidden")) {
+      // Verhindern, dass der Browser die Seite neu lädt oder springt
+      // Wir nutzen history.replaceState, um den aktuellen State zu aktualisieren
+      // und dann manuell zurück zum Grid zu wechseln.
+      
+      // 1. Hash entfernen (damit der Browser "Zurück" nicht mehr zum Hash führt)
+      history.replaceState(null, "", window.location.pathname);
+      
+      // 2. Unsere Animation starten
+      backToGrid();
+      
+      // 3. Filter zurücksetzen (optional, da backToGrid das schon macht)
+      // filter.value = ""; 
+    }
+    // Wenn roomDetail.hidden == true, passiert nichts -> Browser macht normalen Back-Flow.
+  });
+
+  // Grid -> Einzelansicht
+  roomList.classList.add("fade-out");
+
+  setTimeout(() => {
+    roomList.classList.add("hidden");
+    roomList.classList.remove("fade-out");
+
+    roomDetail.innerHTML = "";
+
+    const detailCard = createDetailCard(card);
+    roomDetail.appendChild(detailCard);
+
+    // WICHTIG: Jetzt rendern wir die Buchungen für die Detailansicht neu
+    const roomId = card.id;
+    const roomData = roomDataGlobal.find(r => r.id === roomId);
+    
+    if (roomData) {
+      renderRoom(roomData, "detail");
+    }
+
+    roomDetail.classList.remove("hidden");
+    roomDetail.classList.add("fade-in");
+
+    setTimeout(() => {
+      roomDetail.classList.remove("fade-in");
+    }, 300);
+
+  }, delay);
+}
 
 /*CARD CLICK*/
   cards.forEach(card => {
@@ -1175,6 +1264,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 🔹 ALLE RÄUME
     if (value === "") {
+      currentLevelFilter = null;
       if (!roomDetail.classList.contains("hidden")) backToGrid();
 
       fadeSwitchLevels(() => {
@@ -1185,6 +1275,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 🔹 EBENEN
     if (value === "LEVEL_1") {
+      currentLevelFilter = "1";
       if (!roomDetail.classList.contains("hidden")) backToGrid();
 
       fadeSwitchLevels(() => {
@@ -1194,6 +1285,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (value === "LEVEL_2") {
+      currentLevelFilter = "2";
       if (!roomDetail.classList.contains("hidden")) backToGrid();
 
       fadeSwitchLevels(() => {
@@ -1203,6 +1295,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (value === "LEVEL_3") {
+      currentLevelFilter = "3";
       if (!roomDetail.classList.contains("hidden")) backToGrid();
 
       fadeSwitchLevels(() => {
@@ -1212,6 +1305,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (value === "LEVEL_4") {
+      currentLevelFilter = "4";
       if (!roomDetail.classList.contains("hidden")) backToGrid();
 
       fadeSwitchLevels(() => {
@@ -1221,6 +1315,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (value === "LEVEL_5") {
+      currentLevelFilter = "5";
       if (!roomDetail.classList.contains("hidden")) backToGrid();
 
       fadeSwitchLevels(() => {
@@ -1243,46 +1338,67 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 /*ZURÜCK BUTTON*/
- backButton.addEventListener("click", e => {
+backButton.addEventListener("click", e => {
+
   e.preventDefault();
 
-  // 🔹 1. Einzelansicht → Grid
+  // ==========================
+  // Einzelansicht -> Ebene/Grid
+  // ==========================
   if (!roomDetail.classList.contains("hidden")) {
+
     backToGrid();
-    filter.value = "";
-    showAllLevels();
+
+    if (currentLevelFilter) {
+      filter.value = "LEVEL_" + currentLevelFilter;
+    } else {
+      filter.value = "";
+    }
+
     return;
   }
 
-  // 🔹 2. Ebene gefiltert → Alle Räume mit Fade
-  if (filter.value !== "") {
-    const visibleLevels = Array.from(levels).filter(l => !l.classList.contains("hidden"));
+  // ==========================
+  // Ebene -> Alle Räume
+  // ==========================
+  if (currentLevelFilter) {
 
-    // fade-out der aktuell sichtbaren Ebene(n)
+    const visibleLevels = Array.from(levels)
+      .filter(l => !l.classList.contains("hidden"));
+
     visibleLevels.forEach(l => l.classList.add("fade-out"));
-    
+
     setTimeout(() => {
-      // alle Levels wieder sichtbar
+
       showAllLevels();
 
-      // fade-out entfernen & fade-in hinzufügen
       visibleLevels.forEach(l => {
         l.classList.remove("fade-out");
       });
+
       levels.forEach(l => l.classList.add("fade-in"));
 
-      setTimeout(() => levels.forEach(l => l.classList.remove("fade-in")), 300);
+      setTimeout(() => {
+        levels.forEach(l => l.classList.remove("fade-in"));
+      }, 300);
 
-      // Filter zurücksetzen
+      currentLevelFilter = null;
       filter.value = "";
+
     }, 300);
 
     return;
   }
 
-  // 🔹 3. Wirklich zurück zur Index
+  // ==========================
+  // Zurück zur Startseite
+  // ==========================
   body.classList.add("fadeOutPage");
-  setTimeout(() => window.location.href = backButton.href, 300);
+
+  setTimeout(() => {
+    window.location.href = backButton.href;
+  }, 300);
+
 });
 
 /*HASH / SEARCHBAR*/
@@ -1309,14 +1425,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 50);
   }
 });
-</script>
 
+</script>
 
 <!-- Daten Import Scraper (GitHub) -->
 <script>
-const DATA_URL = "https://raw.githubusercontent.com/Maurice9922/Backend-HMU-Website/refs/heads/main/rooms.json";
+const DATA_URL = "https://raw.githubusercontent.com/Maurice9922/Backend-HMU-Website/refs/heads/main/rooms2.json";
 const MAX_CHARS = 30;
-const MAX_BOOKINGS = 2;
+// Konstanten
+const MAX_BOOKINGS_DETAIL = 7; // Maximal in Detailansicht
+const MIN_DISPLAY = 2;         // Mindestens 2 Einträge (auch Platzhalter) in Grid UND Detail
 
 // ===============================
 // HELPER
@@ -1436,13 +1554,25 @@ function renderRoom(room, mode = "location") {
       const dateB = new Date(`${b.date}T${b.start || "00:00"}`);
       return dateA - dateB;
     })
-    .slice(0, MAX_BOOKINGS);
 
-  // Immer 2 Slots für feste Höhe
-  while (relevantBookings.length < MAX_BOOKINGS) {
-    relevantBookings.push(null);
+  // ===============================
+  // LIMITIERUNG & AUFFÜLLEN
+  // ===============================
+
+  // Grid-Modus: Maximal 2 Einträge (dann auffüllen)
+  if (mode === "grid") {
+    relevantBookings = relevantBookings.slice(0, MIN_DISPLAY);
+  } 
+  // Detail-Modus: Maximal 7 Einträge (dann auffüllen, falls < 2)
+  else {
+    relevantBookings = relevantBookings.slice(0, MAX_BOOKINGS_DETAIL);
   }
 
+  // Immer auffüllen auf MIN_DISPLAY (2), egal ob Grid oder Detail
+  while (relevantBookings.length < MIN_DISPLAY) {
+    relevantBookings.push(null);
+  }
+  
   // ===============================
   // STATUS + HOVER
   // ===============================
@@ -1463,9 +1593,8 @@ function renderRoom(room, mode = "location") {
   // ===============================
 
   relevantBookings.forEach((b, idx) => {
-    const isLast = idx === MAX_BOOKINGS - 1;
+    const isLast = idx === relevantBookings.length - 1;
 
-   
     // ---- ZEILE 1 ----
     const line1 = document.createElement("p");
     line1.className = "text-zinc-400 text-sm leading-5 whitespace-pre";
@@ -1476,7 +1605,7 @@ function renderRoom(room, mode = "location") {
       const timeText = (b.start && b.end) ? `-> ${b.start} - ${b.end} Uhr` : "";
     
       const visibleText = `- ${dayText}: ${dateText} ${timeText}`;
-      const fillLength = Math.max(0, MAX_CHARS - visibleText.length); // volle Breite bei Buchung
+      const fillLength = Math.max(0, MAX_CHARS - visibleText.length); 
     
       line1.innerHTML = `${visibleText}<span class="invisible">${"#".repeat(fillLength)}</span>`;
     
@@ -1490,8 +1619,7 @@ function renderRoom(room, mode = "location") {
     
     bookingContainer.appendChild(line1);
 
-
-  // ---- ZEILE 2 ----
+    // ---- ZEILE 2 ----
     const line2 = document.createElement("p");
     line2.className =
       "text-zinc-400 text-sm leading-5 whitespace-pre pl-2.5" +
@@ -1500,7 +1628,6 @@ function renderRoom(room, mode = "location") {
     if (b && b.person) {
       line2.textContent = b.person;
     } else {
-      // unsichtbares Zeichen, damit die Zeile existiert
       line2.innerHTML = `<span class="invisible">#</span>`;
     }
     
@@ -1512,13 +1639,56 @@ function renderRoom(room, mode = "location") {
 // LOAD DATA
 // ===============================
 
+let roomDataGlobal = []; // Globale Variable für die Daten
+
 async function loadRoomData() {
   try {
     const res = await fetch(DATA_URL);
     const data = await res.json();
-    data.rooms.forEach(room => renderRoom(room, "location"));
+    roomDataGlobal = data.rooms; // Hier speichern
+    
+    data.rooms.forEach(room => renderRoom(room, "grid"));
   } catch(err) {
-    console.error("Fehler beim Laden:", err);
+    console.error("Fehler beim Laden der Daten:", err);
+    dataLoadingError = true;
+    
+    const cards = document.querySelectorAll(".room-card");
+    cards.forEach(card => {
+      const bookingContainer = card.querySelector(".booking-container");
+      const statusEl = card.querySelector(".room-status");
+      const hoverGlow = card.querySelector("div.absolute");
+
+      if (bookingContainer) {
+        bookingContainer.innerHTML = "";
+        
+        const MAX_CHARS = 30; 
+
+        // ---- ZEILE 1 (Fehlermeldung) ----
+        const line1 = document.createElement("p");
+        // `whitespace-pre-wrap` erlaubt Umbruch bei 30 Zeichen, aber respektiert Leerzeichen davor
+        line1.className = "text-red-500 text-sm leading-5 whitespace-pre-wrap max-w-[30ch] mb-4";
+        
+        const errorMsg = "❌ Daten konnten nicht geladen werden. Bitte die Seite neu laden oder später erneut versuchen.";
+        const visibleText = `${errorMsg}`;
+        
+        // Wir füllen auf 30 Zeichen auf, damit die Breite immer gleich ist
+        const fillLength = Math.max(0, MAX_CHARS - visibleText.length);
+        
+        line1.innerHTML = `${visibleText}<span class="invisible">${"#".repeat(fillLength)}</span>`;
+        bookingContainer.appendChild(line1);
+      }
+
+      if (statusEl) {
+        statusEl.textContent = "fehler";
+        statusEl.classList.remove("text-emerald-400");
+        statusEl.classList.add("text-red-500");
+      }
+      
+      if (hoverGlow) {
+        hoverGlow.classList.remove("bg-green-400/50");
+        hoverGlow.classList.add("bg-red-400/50");
+      }
+    });
   }
 }
 
