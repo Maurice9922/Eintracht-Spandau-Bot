@@ -657,16 +657,11 @@ body.preload {
             <h3 class="text-lg font-semibold">
             P4.32 <span class=" text-sm font-medium">(Biologie/Histologie)</span>
             </h3>
-            <span class="text-emerald-400 text-sm font-medium mt-1">frei</span>
+            <span class="room-status text-sm font-medium mt-1"></span>
           </div>
-          <p class="text-zinc-400 text-sm mb-4">
-            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
-          </p>
-          <p class="text-zinc-400 text-sm">
-            HEUTE: 29.12.25 von 07:00 bis 13:00 Uhr Herr Töpfer 
-          </p>
+            <div class="booking-container"></div>
+          </div>
         </div>
-      </div>
 
     <!-- Raum 7 -->
       <div class="group relative room-card cursor-pointer" id="P4.34">
@@ -1200,36 +1195,48 @@ function showCard(card, delay = 300) {
     return;
   }
 
-  /* --- BROWSER BACK BUTTON HANDLING --- */
+ /* --- BROWSER BACK BUTTON HANDLING (VOLLSTÄNDIG) --- */
   window.addEventListener("popstate", () => {
+    const currentHash = window.location.hash.replace("#", "");
 
-  const hash = window.location.hash.replace("#", "");
-
-  // Kein Hash -> zurück zur Gridansicht
-  if (!hash) {
-
+    // FALL A: Wir sind in der Detailansicht (Karte offen)
     if (!roomDetail.classList.contains("hidden")) {
+      // Zurück zum Grid, aber Filterzustand (currentLevelFilter) bleibt erhalten
       backToGrid();
+      
+      // Hash entfernen, damit der Browser nicht versucht, die Karte erneut zu öffnen
+      if (currentHash) {
+        history.replaceState(null, "", window.location.pathname);
+      }
+      return;
     }
 
-    return;
-  }
-
-  // Raum aus Hash öffnen
-  const card = document.getElementById(hash);
-
-  if (card) {
-
-    const levelContainer = card.closest(".level-container");
-
-    if (levelContainer) {
-      showOnlyLevel(levelContainer.dataset.level);
+    // FALL B: Wir sind im Grid, aber ein Hash ist vorhanden (z.B. direkter Link oder Filter)
+    if (currentHash) {
+      // Prüfen, ob es ein Raum ist
+      const card = document.getElementById(currentHash);
+      if (card) {
+        // Raum gefunden -> Öffnen
+        const levelContainer = card.closest(".level-container");
+        if (levelContainer) {
+          showOnlyLevel(levelContainer.dataset.level);
+        }
+        showCard(card, 0);
+        filter.value = currentHash;
+      } else if (currentHash.startsWith("LEVEL_")) {
+        // Es ist ein Level-Filter (z.B. #LEVEL_1)
+        const level = currentHash.replace("LEVEL_", "");
+        currentLevelFilter = level;
+        showOnlyLevel(level);
+        filter.value = currentHash;
+        // roomList ist schon sichtbar, also nichts tun außer Filter setzen
+      }
+      return;
     }
 
-    showCard(card, 0);
-    filter.value = hash;
-  }
-});
+    // FALL C: Wir sind im Grid, kein Hash -> Normaler Browser-Back
+    // Hier passiert nichts, der Browser geht zurück.
+  });
 
   // Grid -> Einzelansicht
   roomList.classList.add("fade-out");
@@ -1459,7 +1466,7 @@ backButton.addEventListener("click", e => {
 
 <!-- Daten Import Scraper (GitHub) -->
 <script>
-const DATA_URL = "https://raw.githubusercontent.com/Maurice9922/Backend-HMU-Website/refs/heads/main/rooms2.json";
+const DATA_URL = "https://raw.githubusercontent.com/Maurice9922/Backend-HMU-Website/refs/heads/main/rooms.json";
 const MAX_CHARS = 30;
 // Konstanten
 const MAX_BOOKINGS_DETAIL = 7; // Maximal in Detailansicht
