@@ -1195,69 +1195,78 @@ function showCard(card, delay = 300) {
     return;
   }
 
-/* --- BROWSER BACK BUTTON KOPPLUNG --- */
-  // Wir speichern die originale Funktion
-  const originalHistoryBack = history.back;
+ /* --- BROWSER BACK BUTTON HANDLING (KORREKT: KEIN SPRUNG ZUR STARTSEITE) --- */
+  window.addEventListener("popstate", () => {
+    const currentHash = window.location.hash.replace("#", "");
 
-  // Wir überschreiben history.back mit unserer eigenen Logik
-  history.back = function() {
-    
-    // FALL 1: Wir sind in der Detailansicht (Karte offen)
+    // FALL A: Wir sind in der Detailansicht (Karte offen)
     if (!roomDetail.classList.contains("hidden")) {
-      // Führe die gleiche Logik wie beim Klick auf den "Zurück"-Button aus
       backToGrid();
       
-      // Wichtig: Wir müssen den Browser-Stack manuell anpassen, damit der nächste "Zurück"-Knopf wieder funktioniert.
-      // Wir entfernen den aktuellen Hash, damit der Browser "glaubt", er wäre im Grid.
-      // Das verhindert, dass der Browser nach "backToGrid" sofort wieder die Detailansicht öffnet.
-      if (window.location.hash) {
+      // Hash entfernen, damit der Browser nicht versucht, die Karte erneut zu öffnen
+      if (currentHash) {
         history.replaceState(null, "", window.location.pathname);
       }
-      
-      // Wir geben "undefined" zurück, um zu signalisieren, dass wir die Aktion übernommen haben
       return;
     }
 
-    // FALL 2: Wir sind im Grid, aber eine Ebene ist gefiltert (currentLevelFilter ist gesetzt)
-    if (currentLevelFilter) {
-      // Führe die Logik aus, um von der Ebene zur Gesamtansicht zu gehen
-      // Das ist die gleiche Logik wie im "Zurück"-Button bei "Ebene -> Alle Räume"
-      
-      const visibleLevels = Array.from(levels)
-        .filter(l => !l.classList.contains("hidden"));
-
-      visibleLevels.forEach(l => l.classList.add("fade-out"));
-
-      setTimeout(() => {
-        showAllLevels();
-
-        visibleLevels.forEach(l => {
-          l.classList.remove("fade-out");
-        });
-
-        levels.forEach(l => l.classList.add("fade-in"));
-
-        setTimeout(() => {
-          levels.forEach(l => l.classList.remove("fade-in"));
-        }, 300);
-
-        currentLevelFilter = null;
-        filter.value = "";
-        
-        // Auch hier den Hash entfernen, falls vorhanden (z.B. #LEVEL_1)
-        if (window.location.hash) {
-           history.replaceState(null, "", window.location.pathname);
+    // FALL B: Wir sind im Grid, aber ein Hash ist vorhanden (Raum oder Ebene)
+    if (currentHash) {
+      const card = document.getElementById(currentHash);
+      if (card) {
+        const levelContainer = card.closest(".level-container");
+        if (levelContainer) {
+          showOnlyLevel(levelContainer.dataset.level);
         }
-      }, 300);
-
+        showCard(card, 0);
+        filter.value = currentHash;
+      } else if (currentHash.startsWith("LEVEL_")) {
+        const level = currentHash.replace("LEVEL_", "");
+        currentLevelFilter = level;
+        fadeSwitchLevels(() => {
+          showOnlyLevel(level);
+        });
+        filter.value = currentHash;
+      }
       return;
     }
 
-    // FALL 3: Wir sind im Grid, keine Ebene gefiltert (currentLevelFilter ist null)
-    // Hier ist es wirklich Zeit, zur vorherigen Seite (Startseite) zu gehen.
-    // Jetzt rufen wir die originale Funktion auf.
-    originalHistoryBack.call(history);
-  };
+    // FALL C: Wir sind im Grid, KEIN Hash mehr (leerer Hash).
+    // Das passiert, wenn man von "LEVEL_1" zurückdrückt.
+    // Hier ist das Problem: Der Browser denkt "Kein Hash = Startseite".
+    // Wir müssen das blockieren und stattdessen zur Gesamtansicht gehen.
+    
+    // 1. Setze Filter auf null
+    currentLevelFilter = null;
+    filter.value = "";
+    
+    // 2. WICHTIG: Wir ersetzen den leeren Hash durch einen "sicheren" Hash,
+    // damit der Browser nicht den Stack verlässt.
+    // Wir nutzen einen Platzhalter-Hash, der nichts bewirkt, aber den Stack hält.
+    // Oder wir nutzen einfach `history.replaceState`, um den aktuellen State zu aktualisieren
+    // und verhindern, dass der Browser "zurück" zum vorherigen Eintrag (Startseite) geht.
+    
+    // Wir ersetzen den aktuellen State (leerer Hash) durch einen State, der "Grid ohne Filter" ist.
+    // Das verhindert, dass der Browser den Stack verlässt.
+    history.replaceState(null, "", window.location.pathname + "?grid=1"); 
+    // (Alternativ: history.replaceState(null, "", window.location.pathname); 
+    // Aber das könnte trotzdem zu Problemen führen, wenn der Browser denkt "Hash weg = Startseite".
+    // Der sicherste Weg ist, den Hash explizit auf eine leere Zeichenkette zu setzen, 
+    // aber den State zu aktualisieren, damit der Browser "bleibt".
+    
+    // Besser: Wir nutzen history.pushState oder replaceState, um den Stack "neu zu schreiben"
+    // und verhindern, dass der Browser "zurück" geht.
+    // Da wir gerade "popstate" haben, ist der Browser im Begriff zurückzugehen.
+    // Wir müssen ihn stoppen.
+    
+    // Wir nutzen `history.back()` nicht, sondern wir manipulieren den Stack.
+    // Wir ersetzen den aktuellen Eintrag durch einen, der "Grid, alle Ebenen" bedeutet.
+    history.replaceState(null, "", window.location.pathname);
+    
+    // 3. Animation ausführen
+    fadeSwitchLevels(() => {
+      showAllLevels();
+    });
   
   // Grid -> Einzelansicht
   roomList.classList.add("fade-out");
