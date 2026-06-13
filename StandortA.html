@@ -1195,23 +1195,23 @@ function showCard(card, delay = 300) {
     return;
   }
 
- /* --- BROWSER BACK BUTTON HANDLING (VOLLSTÄNDIG) --- */
+/* --- BROWSER BACK BUTTON HANDLING (ENDGÜLTIG KORREKT) --- */
   window.addEventListener("popstate", () => {
     const currentHash = window.location.hash.replace("#", "");
 
     // FALL A: Wir sind in der Detailansicht (Karte offen)
     if (!roomDetail.classList.contains("hidden")) {
-      // Zurück zum Grid, aber Filterzustand (currentLevelFilter) bleibt erhalten
+      // Zurück zum Grid, Filterzustand bleibt erhalten
       backToGrid();
       
-      // Hash entfernen, damit der Browser nicht versucht, die Karte erneut zu öffnen
+      // Hash entfernen, um Endlosschleifen zu vermeiden
       if (currentHash) {
         history.replaceState(null, "", window.location.pathname);
       }
       return;
     }
 
-    // FALL B: Wir sind im Grid, aber ein Hash ist vorhanden (z.B. direkter Link oder Filter)
+    // FALL B: Wir sind im Grid, aber ein Hash ist vorhanden
     if (currentHash) {
       // Prüfen, ob es ein Raum ist
       const card = document.getElementById(currentHash);
@@ -1223,19 +1223,31 @@ function showCard(card, delay = 300) {
         }
         showCard(card, 0);
         filter.value = currentHash;
-      } else if (currentHash.startsWith("LEVEL_")) {
-        // Es ist ein Level-Filter (z.B. #LEVEL_1)
+      } 
+      // Prüfen, ob es ein Level ist (z.B. #LEVEL_1)
+      else if (currentHash.startsWith("LEVEL_")) {
         const level = currentHash.replace("LEVEL_", "");
         currentLevelFilter = level;
         showOnlyLevel(level);
         filter.value = currentHash;
-        // roomList ist schon sichtbar, also nichts tun außer Filter setzen
+        // roomList ist bereits sichtbar, nichts weiter tun
       }
       return;
     }
 
-    // FALL C: Wir sind im Grid, kein Hash -> Normaler Browser-Back
-    // Hier passiert nichts, der Browser geht zurück.
+    // FALL C: Wir sind im Grid, KEIN Hash mehr (oder leerer Hash)
+    // Das passiert, wenn man von "LEVEL_1" zurückdrückt.
+    // Hier müssen wir sicherstellen, dass wir zur "Gesamtansicht" (alle Ebenen) gehen.
+    
+    // Setze Filter auf null, um anzuzeigen, dass keine Ebene mehr aktiv ist
+    currentLevelFilter = null;
+    filter.value = "";
+    
+    // Zeige ALLE Ebenen an
+    showAllLevels();
+    
+    // Wichtig: Wir rufen KEINEN "back" oder "location.href" auf.
+    // Der Browser hat den Hash bereits entfernt. Wir passen nur den UI-Zustand an.
   });
 
   // Grid -> Einzelansicht
