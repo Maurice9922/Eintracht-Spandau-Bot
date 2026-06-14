@@ -1195,12 +1195,13 @@ function showCard(card, delay = 300) {
     return;
   }
 
- /* --- BROWSER BACK BUTTON HANDLING (KORREKT: KEIN SPRUNG ZUR STARTSEITE) --- */
+ /* --- BROWSER BACK BUTTON HANDLING (MIT ANIMATION & KEIN SPRUNG) --- */
   window.addEventListener("popstate", () => {
     const currentHash = window.location.hash.replace("#", "");
 
     // FALL A: Wir sind in der Detailansicht (Karte offen)
     if (!roomDetail.classList.contains("hidden")) {
+      // Wir rufen backToGrid auf, das enthält die Animationen für die Detailansicht
       backToGrid();
       
       // Hash entfernen, damit der Browser nicht versucht, die Karte erneut zu öffnen
@@ -1210,22 +1211,31 @@ function showCard(card, delay = 300) {
       return;
     }
 
-    // FALL B: Wir sind im Grid, aber ein Hash ist vorhanden (Raum oder Ebene)
+    // FALL B: Wir sind im Grid, aber ein Hash ist vorhanden (z.B. Ebene oder Raum)
     if (currentHash) {
+      // Prüfen, ob es ein Raum ist
       const card = document.getElementById(currentHash);
       if (card) {
+        // Raum gefunden -> Öffnen
         const levelContainer = card.closest(".level-container");
         if (levelContainer) {
           showOnlyLevel(levelContainer.dataset.level);
         }
-        showCard(card, 0);
+        // Wir nutzen showCard, aber ohne Fade (da wir gerade erst angekommen sind)
+        showCard(card, 0); 
         filter.value = currentHash;
-      } else if (currentHash.startsWith("LEVEL_")) {
+      } 
+      // Prüfen, ob es ein Level ist (z.B. #LEVEL_1)
+      else if (currentHash.startsWith("LEVEL_")) {
         const level = currentHash.replace("LEVEL_", "");
         currentLevelFilter = level;
+        
+        // Animation für Ebene hinzufügen (falls gewünscht, sonst nur direkt setzen)
+        // Hier nutzen wir fadeSwitchLevels, um das gleiche Gefühl wie beim Filter-Change zu haben
         fadeSwitchLevels(() => {
           showOnlyLevel(level);
         });
+        
         filter.value = currentHash;
       }
       return;
@@ -1233,40 +1243,21 @@ function showCard(card, delay = 300) {
 
     // FALL C: Wir sind im Grid, KEIN Hash mehr (leerer Hash).
     // Das passiert, wenn man von "LEVEL_1" zurückdrückt.
-    // Hier ist das Problem: Der Browser denkt "Kein Hash = Startseite".
-    // Wir müssen das blockieren und stattdessen zur Gesamtansicht gehen.
+    // Hier müssen wir zur "Gesamtansicht" (alle Ebenen) gehen, MIT Animation.
     
-    // 1. Setze Filter auf null
+    // Wir setzen den Filter auf null, um anzuzeigen, dass keine Ebene mehr aktiv ist
     currentLevelFilter = null;
     filter.value = "";
     
-    // 2. WICHTIG: Wir ersetzen den leeren Hash durch einen "sicheren" Hash,
-    // damit der Browser nicht den Stack verlässt.
-    // Wir nutzen einen Platzhalter-Hash, der nichts bewirkt, aber den Stack hält.
-    // Oder wir nutzen einfach `history.replaceState`, um den aktuellen State zu aktualisieren
-    // und verhindern, dass der Browser "zurück" zum vorherigen Eintrag (Startseite) geht.
-    
-    // Wir ersetzen den aktuellen State (leerer Hash) durch einen State, der "Grid ohne Filter" ist.
-    // Das verhindert, dass der Browser den Stack verlässt.
-    history.replaceState(null, "", window.location.pathname + "?grid=1"); 
-    // (Alternativ: history.replaceState(null, "", window.location.pathname); 
-    // Aber das könnte trotzdem zu Problemen führen, wenn der Browser denkt "Hash weg = Startseite".
-    // Der sicherste Weg ist, den Hash explizit auf eine leere Zeichenkette zu setzen, 
-    // aber den State zu aktualisieren, damit der Browser "bleibt".
-    
-    // Besser: Wir nutzen history.pushState oder replaceState, um den Stack "neu zu schreiben"
-    // und verhindern, dass der Browser "zurück" geht.
-    // Da wir gerade "popstate" haben, ist der Browser im Begriff zurückzugehen.
-    // Wir müssen ihn stoppen.
-    
-    // Wir nutzen `history.back()` nicht, sondern wir manipulieren den Stack.
-    // Wir ersetzen den aktuellen Eintrag durch einen, der "Grid, alle Ebenen" bedeutet.
-    history.replaceState(null, "", window.location.pathname);
-    
-    // 3. Animation ausführen
+    // WICHTIG: Wir nutzen fadeSwitchLevels, um die Animation für "Alle Ebenen" auszulösen
+    // Das verhindert das "Springen" und sorgt für den gewünschten Fade-Effekt.
     fadeSwitchLevels(() => {
       showAllLevels();
     });
+    
+    // Wir rufen KEINEN "back" oder "location.href" auf.
+    // Der Browser hat den Hash bereits entfernt. Wir passen nur den UI-Zustand an.
+  });
   
   // Grid -> Einzelansicht
   roomList.classList.add("fade-out");
