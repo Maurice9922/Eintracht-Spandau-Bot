@@ -1195,69 +1195,117 @@ function showCard(card, delay = 300) {
     return;
   }
 
- /* --- BROWSER BACK BUTTON HANDLING (MIT ANIMATION & KEIN SPRUNG) --- */
-  window.addEventListener("popstate", () => {
-    const currentHash = window.location.hash.replace("#", "");
+ /*ZURÜCK BUTTON - KORREKTIERT*/
+backButton.addEventListener("click", e => {
+  e.preventDefault();
 
-    // FALL A: Wir sind in der Detailansicht (Karte offen)
-    if (!roomDetail.classList.contains("hidden")) {
-      // Wir rufen backToGrid auf, das enthält die Animationen für die Detailansicht
-      backToGrid();
-      
-      // Hash entfernen, damit der Browser nicht versucht, die Karte erneut zu öffnen
-      if (currentHash) {
-        history.replaceState(null, "", window.location.pathname);
-      }
-      return;
+  // FALL A: Wir sind in der Detailansicht (Karte offen)
+  // -> Zurück zum Grid (mit der aktuellen Ebene oder ohne)
+  if (!roomDetail.classList.contains("hidden")) {
+    backToGrid(); // Diese Funktion setzt roomList.hidden=false und zeigt die aktuelle Ebene
+
+    // Synchronisiere den Filter-Input mit dem aktuellen Zustand
+    if (currentLevelFilter) {
+      filter.value = "LEVEL_" + currentLevelFilter;
+    } else {
+      filter.value = "";
     }
+    return;
+  }
 
-    // FALL B: Wir sind im Grid, aber ein Hash ist vorhanden (z.B. Ebene oder Raum)
-    if (currentHash) {
-      // Prüfen, ob es ein Raum ist
-      const card = document.getElementById(currentHash);
-      if (card) {
-        // Raum gefunden -> Öffnen
-        const levelContainer = card.closest(".level-container");
-        if (levelContainer) {
-          showOnlyLevel(levelContainer.dataset.level);
-        }
-        // Wir nutzen showCard, aber ohne Fade (da wir gerade erst angekommen sind)
-        showCard(card, 0); 
-        filter.value = currentHash;
-      } 
-      // Prüfen, ob es ein Level ist (z.B. #LEVEL_1)
-      else if (currentHash.startsWith("LEVEL_")) {
-        const level = currentHash.replace("LEVEL_", "");
-        currentLevelFilter = level;
-        
-        // Animation für Ebene hinzufügen (falls gewünscht, sonst nur direkt setzen)
-        // Hier nutzen wir fadeSwitchLevels, um das gleiche Gefühl wie beim Filter-Change zu haben
-        fadeSwitchLevels(() => {
-          showOnlyLevel(level);
-        });
-        
-        filter.value = currentHash;
-      }
-      return;
-    }
-
-    // FALL C: Wir sind im Grid, KEIN Hash mehr (leerer Hash).
-    // Das passiert, wenn man von "LEVEL_1" zurückdrückt.
-    // Hier müssen wir zur "Gesamtansicht" (alle Ebenen) gehen, MIT Animation.
+  // FALL B: Wir sind im Grid (Detail versteckt)
+  // Hier muss unterscheiden: Sind wir gefiltert oder nicht?
+  if (currentLevelFilter) {
+    // Wir sind gefiltert (z.B. Ebene 2) -> Zurück zu "Alle Ebenen"
     
-    // Wir setzen den Filter auf null, um anzuzeigen, dass keine Ebene mehr aktiv ist
+    // 1. Alle sichtbaren Ebenen ausblenden (für Animation)
+    const visibleLevels = Array.from(levels).filter(l => !l.classList.contains("hidden"));
+    
+    // 2. Animation starten
+    visibleLevels.forEach(l => l.classList.add("fade-out"));
+
+    setTimeout(() => {
+      // 3. Filter zurücksetzen und alle zeigen
+      currentLevelFilter = null;
+      filter.value = ""; // Wichtig: Dropdown zurücksetzen
+      showAllLevels();   // Alle Ebenen anzeigen
+
+      // 4. Animation beenden
+      visibleLevels.forEach(l => l.classList.remove("fade-out"));
+      levels.forEach(l => l.classList.add("fade-in"));
+
+      setTimeout(() => {
+        levels.forEach(l => l.classList.remove("fade-in"));
+      }, 300);
+
+    }, 300);
+    return;
+  }
+
+  // FALL C: Wir sind im Grid, KEIN Filter aktiv -> Startseite verlassen
+  // (Dies ist der Fall, wenn der Button auf der Startseite gedrückt wird)
+  body.classList.add("fadeOutPage");
+  setTimeout(() => {
+    window.location.href = backButton.href;
+  }, 300);
+});
+
+/* BROWSER BACK BUTTON HANDLING - KORREKTIERT */
+window.addEventListener("popstate", () => {
+  const currentHash = window.location.hash.replace("#", "");
+
+  // FALL A: Detailansicht offen -> Zurück zum Grid
+  if (!roomDetail.classList.contains("hidden")) {
+    backToGrid();
+    
+    // Hash entfernen, damit der Browser nicht versucht, die Karte erneut zu öffnen
+    if (currentHash) {
+      history.replaceState(null, "", window.location.pathname);
+    }
+    return;
+  }
+
+  // FALL B: Grid offen, Hash ist vorhanden
+  if (currentHash) {
+    // Prüfen, ob es ein Raum ist
+    const card = document.getElementById(currentHash);
+    if (card) {
+      const levelContainer = card.closest(".level-container");
+      if (levelContainer) {
+        showOnlyLevel(levelContainer.dataset.level);
+      }
+      showCard(card, 0); 
+      filter.value = currentHash;
+      return;
+    } 
+    // Prüfen, ob es ein Level ist (z.B. #LEVEL_1)
+    else if (currentHash.startsWith("LEVEL_")) {
+      const level = currentHash.replace("LEVEL_", "");
+      currentLevelFilter = level;
+      
+      // Animation für Ebene (wie bei manuellem Filtern)
+      fadeSwitchLevels(() => {
+        showOnlyLevel(level);
+      });
+      
+      filter.value = currentHash;
+      return;
+    }
+  }
+
+  // FALL C: Grid offen, KEIN Hash (leerer Hash)
+  // Das passiert, wenn man von "LEVEL_1" zurückdrückt.
+  // Wir müssen zur "Gesamtansicht" (alle Ebenen) gehen.
+  if (currentLevelFilter) {
     currentLevelFilter = null;
     filter.value = "";
     
-    // WICHTIG: Wir nutzen fadeSwitchLevels, um die Animation für "Alle Ebenen" auszulösen
-    // Das verhindert das "Springen" und sorgt für den gewünschten Fade-Effekt.
+    // Animation für "Alle Ebenen" (Vermeidung des Springens)
     fadeSwitchLevels(() => {
       showAllLevels();
     });
-    
-    // Wir rufen KEINEN "back" oder "location.href" auf.
-    // Der Browser hat den Hash bereits entfernt. Wir passen nur den UI-Zustand an.
-  });
+  }
+});
   
   // Grid -> Einzelansicht
   roomList.classList.add("fade-out");
