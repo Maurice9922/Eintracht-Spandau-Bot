@@ -1195,16 +1195,13 @@ function showCard(card, delay = 300) {
     return;
   }
 
- /*ZURÜCK BUTTON - KORREKTIERT*/
+/* ZURÜCK BUTTON (Korrektur) */
 backButton.addEventListener("click", e => {
   e.preventDefault();
 
-  // FALL A: Wir sind in der Detailansicht (Karte offen)
-  // -> Zurück zum Grid (mit der aktuellen Ebene oder ohne)
+  // FALL A: Detailansicht offen -> Zurück zum Grid
   if (!roomDetail.classList.contains("hidden")) {
-    backToGrid(); // Diese Funktion setzt roomList.hidden=false und zeigt die aktuelle Ebene
-
-    // Synchronisiere den Filter-Input mit dem aktuellen Zustand
+    backToGrid();
     if (currentLevelFilter) {
       filter.value = "LEVEL_" + currentLevelFilter;
     } else {
@@ -1213,99 +1210,133 @@ backButton.addEventListener("click", e => {
     return;
   }
 
-  // FALL B: Wir sind im Grid (Detail versteckt)
-  // Hier muss unterscheiden: Sind wir gefiltert oder nicht?
+  // FALL B: Grid offen, aber gefiltert (z.B. Ebene 3) -> Zurück zur Gesamtansicht
   if (currentLevelFilter) {
-    // Wir sind gefiltert (z.B. Ebene 2) -> Zurück zu "Alle Ebenen"
+    // Wir sind gefiltert. Wir wollen zurück zur Gesamtansicht.
+    // Wir nutzen fadeSwitchLevels, um das "Springen" zu vermeiden.
     
-    // 1. Alle sichtbaren Ebenen ausblenden (für Animation)
     const visibleLevels = Array.from(levels).filter(l => !l.classList.contains("hidden"));
-    
-    // 2. Animation starten
     visibleLevels.forEach(l => l.classList.add("fade-out"));
 
     setTimeout(() => {
-      // 3. Filter zurücksetzen und alle zeigen
       currentLevelFilter = null;
-      filter.value = ""; // Wichtig: Dropdown zurücksetzen
-      showAllLevels();   // Alle Ebenen anzeigen
+      filter.value = "";
+      showAllLevels();
 
-      // 4. Animation beenden
       visibleLevels.forEach(l => l.classList.remove("fade-out"));
       levels.forEach(l => l.classList.add("fade-in"));
 
       setTimeout(() => {
         levels.forEach(l => l.classList.remove("fade-in"));
       }, 300);
-
     }, 300);
     return;
   }
 
-  // FALL C: Wir sind im Grid, KEIN Filter aktiv -> Startseite verlassen
-  // (Dies ist der Fall, wenn der Button auf der Startseite gedrückt wird)
+  // FALL C: Grid offen, kein Filter -> Startseite verlassen
   body.classList.add("fadeOutPage");
   setTimeout(() => {
     window.location.href = backButton.href;
   }, 300);
 });
 
-/* BROWSER BACK BUTTON HANDLING - KORREKTIERT */
+/* BROWSER BACK BUTTON HANDLING (KORREKTUR) */
 window.addEventListener("popstate", () => {
   const currentHash = window.location.hash.replace("#", "");
 
   // FALL A: Detailansicht offen -> Zurück zum Grid
   if (!roomDetail.classList.contains("hidden")) {
     backToGrid();
-    
-    // Hash entfernen, damit der Browser nicht versucht, die Karte erneut zu öffnen
     if (currentHash) {
       history.replaceState(null, "", window.location.pathname);
     }
     return;
   }
 
-  // FALL B: Grid offen, Hash ist vorhanden
-  if (currentHash) {
-    // Prüfen, ob es ein Raum ist
+  // FALL B: Grid offen, Hash ist ein Raum (z.B. #raum1) -> Raum öffnen
+  if (currentHash && !currentHash.startsWith("LEVEL_")) {
     const card = document.getElementById(currentHash);
     if (card) {
       const levelContainer = card.closest(".level-container");
       if (levelContainer) {
         showOnlyLevel(levelContainer.dataset.level);
       }
+      // Wir nutzen showCard, aber ohne Fade (da wir direkt angekommen sind)
       showCard(card, 0); 
       filter.value = currentHash;
-      return;
-    } 
-    // Prüfen, ob es ein Level ist (z.B. #LEVEL_1)
-    else if (currentHash.startsWith("LEVEL_")) {
-      const level = currentHash.replace("LEVEL_", "");
-      currentLevelFilter = level;
       
-      // Animation für Ebene (wie bei manuellem Filtern)
-      fadeSwitchLevels(() => {
-        showOnlyLevel(level);
-      });
-      
-      filter.value = currentHash;
+      // WICHTIG: Wenn wir von einer Ebene zurück zu einem Raum springen,
+      // müssen wir sicherstellen, dass currentLevelFilter auf null gesetzt wird,
+      // wenn der Raum zur Gesamtansicht gehört (oder wir ignorieren den Filter).
+      // Hier setzen wir es auf null, da der Raum selbst der Fokus ist.
+      currentLevelFilter = null; 
       return;
     }
   }
 
-  // FALL C: Grid offen, KEIN Hash (leerer Hash)
-  // Das passiert, wenn man von "LEVEL_1" zurückdrückt.
-  // Wir müssen zur "Gesamtansicht" (alle Ebenen) gehen.
+  // FALL C: Grid offen, Hash ist eine Ebene (z.B. #LEVEL_3) -> Ebene zeigen
+  if (currentHash && currentHash.startsWith("LEVEL_")) {
+    const level = currentHash.replace("LEVEL_", "");
+    
+    // Check: Sind wir gerade erst von der Gesamtansicht auf diese Ebene gesprungen?
+    // Wenn ja, und wir drücken Back, wollen wir zurück zur Gesamtansicht.
+    // Der Browser-Back-Button springt hierher.
+    
+    // Wir zeigen die Ebene an.
+    currentLevelFilter = level;
+    fadeSwitchLevels(() => {
+      showOnlyLevel(level);
+    });
+    filter.value = currentHash;
+    return;
+  }
+
+  // FALL D: Grid offen, KEIN Hash (leerer Hash)
+  // Das passiert, wenn man von "LEVEL_3" zurückdrückt.
+  // Hier müssen wir prüfen: War vorher ein Filter aktiv?
+  // Wenn ja -> Zurück zur Gesamtansicht (alle Ebenen).
+  
+  // Wenn currentLevelFilter noch gesetzt ist, bedeutet das, wir waren gefiltert.
+  // Aber der Hash ist weg. Also müssen wir den Filter aufheben.
   if (currentLevelFilter) {
     currentLevelFilter = null;
     filter.value = "";
     
-    // Animation für "Alle Ebenen" (Vermeidung des Springens)
+    // Animation für "Alle Ebenen"
     fadeSwitchLevels(() => {
       showAllLevels();
     });
   }
 });
+
+// Initialisierung beim Laden
+const hash = window.location.hash.replace("#", "");
+if (hash) {
+  const card = document.getElementById(hash);
+  if (card) {
+    const levelContainer = card.closest(".level-container");
+    if (levelContainer) {
+      showOnlyLevel(levelContainer.dataset.level);
+    }
+    roomList.classList.add("hidden");
+    body.classList.remove("preload");
+    body.style.opacity = 1;
+    showCard(card, 50);
+    filter.value = hash;
+  } else if (hash.startsWith("LEVEL_")) {
+    const level = hash.replace("LEVEL_", "");
+    currentLevelFilter = level;
+    fadeSwitchLevels(() => {
+      showOnlyLevel(level);
+    });
+    filter.value = hash;
+  }
+} else {
+  setTimeout(() => {
+    body.classList.remove("preload");
+    body.classList.add("fade-in");
+  }, 50);
+}
   
   // Grid -> Einzelansicht
   roomList.classList.add("fade-out");
@@ -1798,6 +1829,90 @@ async function loadRoomData() {
 }
 
 document.addEventListener("DOMContentLoaded", loadRoomData);
+
+/* ===============================
+     AUTO-REFRESHER (ALLE 60 SEKUNDEN)
+     =============================== */
+  
+  // Konfigurierbare Intervall-Zeit in Millisekunden (60000 = 1 Minute)
+  const REFRESH_INTERVAL = 60000;
+
+  // Funktion zum Laden der Daten ohne Neuladen der gesamten Seite
+  async function refreshRoomData() {
+    try {
+      const res = await fetch(DATA_URL);
+      
+      if (!res.ok) {
+        console.warn("Auto-Refresh fehlgeschlagen: HTTP-Status nicht ok");
+        return;
+      }
+
+      const data = await res.json();
+      
+      // Prüfen, ob rooms existiert und ein Array ist
+      if (!Array.isArray(data.rooms)) {
+        console.warn("Auto-Refresh fehlgeschlagen: Ungültiges Datenformat");
+        return;
+      }
+
+      let hasChanges = false;
+
+      // Wir iterieren durch alle Räume und prüfen, ob sich die Buchungen geändert haben
+      // Wir vergleichen die IDs und die Anzahl der Buchungen (einfacher Check)
+      // Für eine tiefergehende Prüfung müssten wir die Buchungs-Objekte im Detail vergleichen.
+      
+      data.rooms.forEach(newRoom => {
+        const existingCard = document.getElementById(newRoom.id);
+        if (existingCard) {
+          // Wir prüfen, ob sich die Buchungen geändert haben könnten
+          // Ein einfacher Check: Hat sich die Anzahl der Buchungen geändert?
+          const existingRoom = roomDataGlobal.find(r => r.id === newRoom.id);
+          
+          if (!existingRoom) {
+            // Neuer Raum hinzugekommen (sollte in dieser App nicht passieren, aber sicherheitshalber)
+            hasChanges = true;
+          } else if (JSON.stringify(existingRoom.bookings) !== JSON.stringify(newRoom.bookings)) {
+            // Buchungen haben sich geändert
+            hasChanges = true;
+          }
+        }
+      });
+
+      if (hasChanges) {
+        console.log("Aktuelle Daten gefunden. Karten werden aktualisiert...");
+        
+        // Wir rufen renderRoom für ALLE Karten auf, um sie mit den neuen Daten zu aktualisieren.
+        // Das ist effizient und sicher, da renderRoom das DOM nur aktualisiert, wenn sich etwas ändert.
+        data.rooms.forEach(room => {
+          // Wir verwenden "grid" als Modus, da wir im Grid bleiben wollen.
+          // Wenn der Nutzer gerade in der Detailansicht ist, wird die Detailkarte trotzdem aktualisiert,
+          // aber die Detailansicht selbst bleibt offen (da wir sie nicht schließen).
+          // renderRoom findet die Karte im DOM und aktualisiert nur den Booking-Container.
+          renderRoom(room, "grid");
+        });
+
+        // Optional: Ein kleines visuelles Feedback (z.B. ein kleiner Blink-Effekt auf einem Indikator),
+        // damit der Nutzer merkt, dass sich etwas aktualisiert hat.
+        // Hier einfach eine Konsole-Nachricht, um nicht aufdringlich zu sein.
+      } else {
+        // console.log("Keine Änderungen an den Buchungen festgestellt.");
+      }
+
+      // Aktualisieren wir auch die globale Variable
+      roomDataGlobal = data.rooms;
+
+    } catch (err) {
+      console.error("Fehler beim Auto-Refresh:", err);
+    }
+  }
+
+  // Startet den Timer
+  // 60000 ms = 1 Minute
+  setInterval(refreshRoomData, REFRESH_INTERVAL);
+
+  // Optional: Erster Check sofort nach dem Laden (um Wartezeit zu vermeiden)
+  // Wenn Sie das aktivieren, wird die Seite beim Laden sofort einmal gecheckt.
+  // refreshRoomData();
 </script>
   
 </html>
